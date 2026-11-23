@@ -1,0 +1,25 @@
+{
+  "dataset": "pitr-sample",
+  "notes": "样例归档：3 条时间线，2 次分叉，WAL 段 1 MiB",
+  "segment_size": 1048576,
+  "timelines": [
+    {
+      "timeline": "00000001",
+      "parent": null,
+      "switchpoint_lsn": null,
+      "note": "初始时间线"
+    },
+    {
+      "timeline": "00000002",
+      "parent": "00000001",
+      "switchpoint_lsn": "0/300000",
+      "note": "在段 3 内部分叉（3 MiB）"
+    },
+    {
+      "timeline": "00000003",
+      "parent": "00000002",
+      "switchpoint_lsn": "0/580000",
+      "note": "在段 5 内部分叉（5.5 MiB）"
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}重放计划{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>重放计划</h1>
+    <p class="lede">
+      目标 <strong>时间线 {{ plan.target_timeline }}</strong> ·
+      <strong class="mono">{{ target_lsn }}</strong>。
+      选用全备 <strong>{{ plan.backup.backup_id }}</strong>
+      （时间线 {{ plan.backup.timeline }}，一致位点
+      <span class="mono">{{ plan.backup.consistent_lsn | lsn }}</span>，重放起点
+      <span class="mono">{{ plan.backup.start_lsn | lsn }}</span>）。
+    </p>
+  </div>
+  <div class="statusbox {{ 'ok' if can_build else 'bad' }}">
+    <div class="big">{{ '全部校验通过' if can_build else '校验未通过' }}</div>
+    <div class="small">
+      {{ plan.all_files | length }} 个文件已按清单 SHA-256 校验
+      {% if copies %}· {{ copies | length }} 个使用副本{% endif %}
+    </div>
+    {% if can_build %}
+    <form method="post" action="{{ url_for('build') }}">
+      <input type="hidden" name="target_timeline" value="{{ plan.target_timeline }}">
+      <input type="hidden" name="target_lsn" value="{{ target_lsn }}">
+      <button type="submit" class="primary">生成交付包</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+
+{% if plan.warnings %}
+<div class="notice warn">
+  <strong>选择过程说明</strong>
+  <ul>
+    {% for w in plan.warnings %}<li>{{ w }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if skipped %}
+<div class="notice bad">
+  <strong>已放弃的全备</strong>
+  <ul>
+    {% for f in skipped %}
+      <li>
+        <code>{{ f.backup.backup_id }}</code>
+        <span class="badge {{ 'bad' if f.kind in ('gap','corrupt') else 'warn' }}">{{ f.kind }}</span>
+        {{ f.message }}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<section class="card">
+  <h2>重放顺序</h2>
+  <table class="steps">
+    <thead>
+      <tr><th>#</th><th>类型</th><th>文件 / 全备</th><th>时间线</th><th>生效 LSN 范围</th><th>说明</th><th>校验</th></tr>
+    </thead>
+    <tbody>
+    {% for s in steps %}
+      <tr class="{{ 'fork-before' if s.fork_role == 'before-fork' else 'fork-after' if s.fork_role == 'after-fork' else '' }}">
+        <td>{{ loop.index }}</td>
+        <td><span class="kind {{ s.kind }}">{{ s.kind_label }}</span></td>
+        <td><code>{{ s.name }}</code>
+          {% if s.files %}
+            <div class="muted small">{{ s.files | length }} 个文件{% if s.used_copies %} · {{ s.used_copies | length }} 个用副本{% endif %}</div>
+          {% endif %}
+        </td>
+        <td><code>{{ s.timeline }}</code></td>
+        <td class="mono">{{ s.range_text or '—' }}</td>
+        <td class="small">
+          {{ s.note }}
+          {% if s.fork_role == 'before-fork' %}<span class="badge fork">分叉前</span>{% endif %}
+          {% if s.fork_role == 'after-fork' %}<span class="badge fork">分叉后</span>{% endif %}
+          {% for f in s.used_copies %}
+            <div class="copyline small">副本：<code>{{ f.source_rel }}</code> 代替 <code>{{ f.original_rel }}</code></div>
+          {% endfor %}
+        </td>
+        <td>{% if s.verified %}<span class="badge ok">SHA-256 通过</span>{% else %}<span class="badge bad">失败</span><div class="small">{{ s.verify_error }}</div>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if forks %}
+<section class="card">
+  <h2>段内分叉</h2>
+  <table>
+    <thead><tr><th>分叉处</th><th>前段（父时间线）</th><th>后段（子时间线）</th></tr></thead>
+    <tbody>
+    {% for i, before, after in forks %}
+      <tr>
+        <td>第 {{ i + 1 }} 与 {{ i + 2 }} 步之间</td>
+        <td><code>{{ before.name }}</code>（时间线 {{ before.timeline }}）
+          <div class="muted small">{{ before.range_text }}</div></td>
+        <td><code>{{ after.name }}</code>（时间线 {{ after.timeline }}）
+          <div class="muted small">{{ after.range_text }}</div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+var/
+packages/
+tests/
+docs/
+.git
+.gitignore
+.pytest_cache
+.coverage
+htmlcov/
+pytest.ini
+requirements-dev.txt
+data/
+README.md

@@ -1,0 +1,38 @@
+{
+  "backup_id": "base_20251122_0100",
+  "timeline": "00000002",
+  "files": [
+    {
+      "path": "backup_label",
+      "size": 198,
+      "sha256": "b87ff14dca38a56c8581294a0cf5071d67f699b1269f15c91f0bc2a0035c7648",
+      "copies": []
+    },
+    {
+      "path": "global/pg_control",
+      "size": 78,
+      "sha256": "f26f3c01b7cfe02b0174794716aaae52279b8a60f11f46aa9123d867eca20f52",
+      "copies": [
+        "copies/base_20251122_0100-global_pg_control"
+      ]
+    },
+    {
+      "path": "base/1/2610",
+      "size": 49152,
+      "sha256": "7a4256d24d0796e2481b37c24e5042cd37a79c0f467d7c72375698de5a3fc189",
+      "copies": []
+    },
+    {
+      "path": "base/1/16384",
+      "size": 98304,
+      "sha256": "349f5f6a315b4f4cfd9f469b3bfcf3e09c3340fc7a652cf5887ce384372262d1",
+      "copies": []
+    },
+    {
+      "path": "postgresql.conf",
+      "size": 118,
+      "sha256": "ace3179d2a4910403c7fe12ae7c80eaadcd70f3f2b847fa910f76f0b4a8b1854",
+      "copies": []
+    }
+  ]
+}

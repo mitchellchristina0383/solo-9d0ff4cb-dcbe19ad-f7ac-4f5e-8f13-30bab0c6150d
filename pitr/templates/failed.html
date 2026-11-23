@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}无法生成{% endblock %}
+{% block content %}
+<section class="card errorcard">
+  <h1>{{ title }}</h1>
+  <p class="lede">{{ message }}</p>
+  <p class="muted">
+    目标：时间线 <code>{{ target_timeline }}</code> ·
+    LSN <code>{{ target_lsn }}</code>
+  </p>
+  {% if attempts %}
+  <h2>逐个全备的结果</h2>
+  <table>
+    <thead><tr><th>全备</th><th>类型</th><th>原因 / 断点</th></tr></thead>
+    <tbody>
+    {% for a in attempts %}
+      <tr>
+        <td><code>{{ a.backup.backup_id }}</code>
+          <div class="muted small">时间线 {{ a.backup.timeline }} · 一致位点
+            <span class="mono">{{ a.backup.consistent_lsn | lsn }}</span></div>
+        </td>
+        <td><span class="badge {{ 'bad' if a.kind in ('gap','corrupt') else 'warn' }}">{{ a.kind }}</span></td>
+        <td>
+          {{ a.message }}
+          {% if a.gap %}
+            <div class="gapbox">
+              <div><strong>断点位置</strong>：LSN <code>{{ a.gap.breakpoint_lsn | lsn }}</code></div>
+              <div>缺失段：<code>{{ a.gap.file_name }}</code>（时间线 {{ a.gap.timeline }}，段号 {{ a.gap.segno }}）</div>
+              <div>应为范围：<span class="mono">{{ a.gap.seg_start | lsn }} – {{ (a.gap.seg_end - 1) | lsn }}</span></div>
+            </div>
+          {% endif %}
+          {% if a.files %}
+            <div class="muted small">无法替换的文件：{% for f in a.files %}<code>{{ f }}</code>{% if not loop.last %}，{% endif %}{% endfor %}</div>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <p><a class="button" href="{{ url_for('index') }}">返回调整目标</a></p>
+</section>
+{% endblock %}

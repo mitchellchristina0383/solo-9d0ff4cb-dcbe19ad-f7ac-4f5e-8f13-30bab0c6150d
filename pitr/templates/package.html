@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ info.filename }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>交付包详情</h1>
+    <p class="lede">
+      <code>{{ info.filename }}</code><br>
+      目标 <strong>时间线 {{ info.target_timeline }}</strong> ·
+      <strong class="mono">{{ info.target_lsn }}</strong> ·
+      全备 <strong>{{ info.backup_id }}</strong> ·
+      {{ info.step_count }} 步 · {{ info.size | filesize }}
+    </p>
+  </div>
+  <div class="statusbox {{ 'ok' if package_ok else 'bad' }}">
+    <div class="big">{{ '已通过校验' if package_ok else '归档校验失败' }}</div>
+    <div class="small">
+      {% if package_ok %}SHA-256 与生成时一致{% else %}归档字节已被改动，不能下载，请重新生成{% endif %}
+    </div>
+    {% if package_ok %}
+    <a class="button primary" href="{{ url_for('package_download', package_id=info.package_id) }}">下载交付包</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>校验信息</h2>
+  <dl class="kv">
+    <dt>包文件</dt><dd><code>{{ info.filename }}</code></dd>
+    <dt>SHA-256</dt><dd class="mono break">{{ info.sha256 }}</dd>
+    <dt>大小</dt><dd>{{ info.size }} 字节（{{ info.size | filesize }}）</dd>
+    <dt>生成时间</dt><dd>{{ info.created_at | int | datetime }}</dd>
+    <dt>目标</dt><dd>时间线 {{ info.target_timeline }} · LSN <span class="mono">{{ info.target_lsn }}</span></dd>
+    <dt>全备</dt><dd><code>{{ info.backup_id }}</code></dd>
+  </dl>
+</section>
+
+{% if steps %}
+<section class="card">
+  <h2>包内重放顺序</h2>
+  <table class="steps">
+    <thead><tr><th>#</th><th>类型</th><th>文件 / 全备</th><th>时间线</th><th>LSN 范围</th><th>说明</th></tr></thead>
+    <tbody>
+    {% for s in steps %}
+      <tr class="{{ 'fork-before' if s.fork_role == 'before-fork' else 'fork-after' if s.fork_role == 'after-fork' else '' }}">
+        <td>{{ s.order }}</td>
+        <td><span class="kind {{ s.kind }}">{{ '全备' if s.kind == 'base' else 'WAL' }}</span></td>
+        <td><code>{{ s.name }}</code>
+          <div class="muted small">{{ s.files | length }} 个文件{% if s.files | selectattr('copy') | list %} · 含副本{% endif %}</div>
+        </td>
+        <td><code>{{ s.timeline }}</code></td>
+        <td class="mono">{% if s.start_lsn %}{{ s.start_lsn }} – {{ s.end_lsn }}{% endif %}</td>
+        <td class="small">
+          {{ s.note }}
+          {% if s.fork_role == 'before-fork' %}<span class="badge fork">分叉前</span>{% endif %}
+          {% if s.fork_role == 'after-fork' %}<span class="badge fork">分叉后</span>{% endif %}
+          {% for f in s.files if f.copy %}
+            <div class="copyline small">副本：<code>{{ f.source }}</code></div>
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if warnings %}
+<section class="card">
+  <h2>生成时说明</h2>
+  <ul class="warnlist">
+    {% for w in warnings %}<li>{{ w }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{
+  "backups": [
+    {
+      "id": "base_20251120_0100",
+      "timeline": "00000001",
+      "replay_start_lsn": "0/80000",
+      "consistency_lsn": "0/180000",
+      "manifest": "manifests/base_20251120_0100.json",
+      "label": "11-20 01:00 全备（时间线 1）"
+    },
+    {
+      "id": "base_20251121_0100",
+      "timeline": "00000001",
+      "replay_start_lsn": "0/200000",
+      "consistency_lsn": "0/2C0000",
+      "manifest": "manifests/base_20251121_0100.json",
+      "label": "11-21 01:00 全备（时间线 1）"
+    },
+    {
+      "id": "base_20251122_0100",
+      "timeline": "00000002",
+      "replay_start_lsn": "0/320000",
+      "consistency_lsn": "0/3C0000",
+      "manifest": "manifests/base_20251122_0100.json",
+      "label": "11-22 01:00 全备（时间线 2）"
+    },
+    {
+      "id": "base_20251123_0100",
+      "timeline": "00000002",
+      "replay_start_lsn": "0/480000",
+      "consistency_lsn": "0/540000",
+      "manifest": "manifests/base_20251123_0100.json",
+      "label": "11-23 01:00 全备（时间线 2）"
+    },
+    {
+      "id": "base_20251123_0900",
+      "timeline": "00000003",
+      "replay_start_lsn": "0/5C0000",
+      "consistency_lsn": "0/620000",
+      "manifest": "manifests/base_20251123_0900.json",
+      "label": "11-23 09:00 全备（时间线 3）"
+    }
+  ]
+}

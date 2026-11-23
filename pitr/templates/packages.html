@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}已生成交付包{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>已生成交付包</h1>
+  {% if packages %}
+  <table>
+    <thead><tr><th>文件</th><th>目标</th><th>全备</th><th>步骤</th><th>大小</th><th>SHA-256</th><th>生成时间</th><th></th></tr></thead>
+    <tbody>
+    {% for p in packages %}
+      <tr>
+        <td><code>{{ p.filename }}</code></td>
+        <td>{{ p.target_timeline }} · <span class="mono">{{ p.target_lsn }}</span></td>
+        <td>{{ p.backup_id }}</td>
+        <td>{{ p.step_count }}</td>
+        <td>{{ p.size | filesize }}</td>
+        <td class="digest" title="{{ p.sha256 }}">{{ p.sha256[:16] }}…</td>
+        <td class="small">{{ p.created_at | int | datetime }}</td>
+        <td><a href="{{ url_for('package_detail', package_id=p.package_id) }}">详情</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="muted">暂无交付包。</p>
+  {% endif %}
+</section>
+{% endblock %}

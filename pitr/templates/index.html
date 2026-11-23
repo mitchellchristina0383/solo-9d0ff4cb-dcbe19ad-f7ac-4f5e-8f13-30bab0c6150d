@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}归档总览{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>选择恢复目标</h1>
+    <p class="lede">
+      系统按目标时间线历史连续取 WAL 段；跨过段内分叉时，前后分别取所属时间线的段。
+      全备按“一致位点最接近且不晚于目标”挑选，坏档自动换同一文件的副本或改用更早的全备。
+      整包逐字节通过 SHA-256 校验后才开放下载。
+    </p>
+  </div>
+  <form class="target" method="post" action="{{ url_for('plan') }}">
+    <label>目标时间线
+      <select name="target_timeline" required>
+        {% for t in timelines %}
+          <option value="{{ t.timeline }}" {% if loop.last %}selected{% endif %}>
+            {{ t.timeline }}{% if t.parent %}（父 {{ t.parent }}，分叉于 {{ t.switchpoint }}）{% else %}（根）{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>目标 LSN
+      <input name="target_lsn" placeholder="例如 0/5A0000" required
+             pattern="[0-9A-Fa-f]{1,8}/[0-9A-Fa-f]{1,8}"
+             title="十六进制 X/Y 形式，例如 0/5A0000">
+    </label>
+    <button type="submit">生成重放计划</button>
+    <p class="hint">时间线 {{ timelines|length }} 条 · WAL 段 {{ wal|length }} 个 · 全备 {{ backups|length }} 份</p>
+  </form>
+</section>
+
+{% if suggestions %}
+<div class="chips">
+  <span class="chips-label">快捷目标：</span>
+  {% for s in suggestions %}
+    <form method="post" action="{{ url_for('plan') }}" class="inline">
+      <input type="hidden" name="target_timeline" value="{{ s.timeline }}">
+      <input type="hidden" name="target_lsn" value="{{ s.lsn }}">
+      <button class="chip" type="submit">{{ s.label }}</button>
+    </form>
+  {% endfor %}
+</div>
+{% endif %}
+
+<section class="grid">
+  <div class="card">
+    <h2>时间线历史</h2>
+    <table>
+      <thead><tr><th>时间线</th><th>父</th><th>分叉 LSN</th><th>覆盖范围</th></tr></thead>
+      <tbody>
+      {% for t in timelines %}
+        <tr>
+          <td><code>{{ t.timeline }}</code></td>
+          <td>{{ t.parent or '—' }}</td>
+          <td>{{ t.switchpoint }}</td>
+          <td class="mono">{{ t.range }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>全备清单</h2>
+    <table>
+      <thead><tr><th>全备</th><th>时间线</th><th>重放起点</th><th>一致位点</th><th>文件</th></tr></thead>
+      <tbody>
+      {% for b in backups %}
+        <tr>
+          <td><strong>{{ b.id }}</strong><div class="muted small">{{ b.label }}</div></td>
+          <td><code>{{ b.timeline }}</code></td>
+          <td class="mono">{{ b.start }}</td>
+          <td class="mono">{{ b.consistent }}</td>
+          <td>{{ b.files }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>WAL 归档清单 <span class="muted small">段大小 {{ segment_size }} 字节</span></h2>
+  <table class="compact">
+    <thead><tr><th>文件</th><th>时间线</th><th>段号</th><th>LSN 范围</th><th>大小</th><th>SHA-256</th><th>副本</th></tr></thead>
+    <tbody>
+    {% for w in wal %}
+      <tr>
+        <td><code>{{ w.file_name }}</code></td>
+        <td><code>{{ w.timeline }}</code></td>
+        <td>{{ w.segno }}</td>
+        <td class="mono">{{ w.start }} – {{ w.end }}</td>
+        <td>{{ w.size }}</td>
+        <td class="digest" title="{{ w.sha256 }}">{{ w.sha256[:16] }}…</td>
+        <td>{% if w.copies %}<span class="badge ok">有副本</span>{% else %}—{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>已生成交付包</h2>
+  {% if packages %}
+  <table>
+    <thead><tr><th>文件</th><th>目标</th><th>全备</th><th>步骤</th><th>SHA-256</th><th>生成时间</th><th></th></tr></thead>
+    <tbody>
+    {% for p in packages %}
+      <tr>
+        <td><code>{{ p.filename }}</code></td>
+        <td>{{ p.target_timeline }} · <span class="mono">{{ p.target_lsn }}</span></td>
+        <td>{{ p.backup_id }}</td>
+        <td>{{ p.step_count }}</td>
+        <td class="digest" title="{{ p.sha256 }}">{{ p.sha256[:16] }}…</td>
+        <td class="small">{{ p.created_at | int | datetime }}</td>
+        <td><a href="{{ url_for('package_detail', package_id=p.package_id) }}">详情 / 下载</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="muted">还没有生成交付包。填写目标后点击“生成重放计划”。</p>
+  {% endif %}
+</section>
+
+<section class="meta muted small">
+  数据目录：<code>{{ data_dir }}</code> · 清单加载于 {{ loaded_at | int | datetime }}
+  <form method="post" action="{{ url_for('reload_catalog') }}" class="inline">
+    <button class="link" type="submit">重新加载清单</button>
+  </form>
+</section>
+{% endblock %}

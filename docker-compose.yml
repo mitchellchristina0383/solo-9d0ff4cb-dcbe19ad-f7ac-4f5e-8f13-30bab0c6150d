@@ -1,0 +1,49 @@
+# One command brings up the reviewer UI:  docker compose up --build
+#
+# The sample archive is baked into the image at /data, so a clean checkout needs
+# no host preparation.  Generated packages land in the named volume
+# "pitr-packages" so they survive container restarts.
+#
+# To serve a real archive from the host instead, uncomment the :ro bind mount
+# below and set PITR_AUTOGENERATE=0 (a read-only mount cannot be regenerated).
+services:
+  pitr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pitr-delivery:local
+    container_name: pitr-delivery
+    ports:
+      - "127.0.0.1:${PITR_PORT:-8000}:8000"
+    environment:
+      PITR_DATA_DIR: /data
+      PITR_PACKAGES_DIR: /packages
+      PITR_PACKAGE_TTL: ${PITR_PACKAGE_TTL:-86400}
+      PITR_SECRET_KEY: ${PITR_SECRET_KEY:-change-me-before-exposure}
+      PITR_AUTOGENERATE: "0"
+    volumes:
+      - pitr-packages:/packages
+      # - ./data:/data:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import sys, urllib.request
+          sys.exit(0 if urllib.request.urlopen("http://127.0.0.1:8000/healthz", timeout=2).status == 200 else 1)
+      interval: 15s
+      timeout: 4s
+      retries: 4
+      start_period: 20s
+
+volumes:
+  pitr-packages:

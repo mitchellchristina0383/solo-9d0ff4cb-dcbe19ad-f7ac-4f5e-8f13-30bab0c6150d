@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}PITR 交付包{% endblock %} · 值班 DBA</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="{{ url_for('index') }}">PITR 交付包<span class="dot">·</span><span class="sub">PostgreSQL 指定时间线 / LSN 恢复</span></a>
+    <nav>
+      <a href="{{ url_for('index') }}">归档总览</a>
+      <a href="{{ url_for('package_list') }}">已生成交付包</a>
+      <a href="{{ url_for('healthz') }}">健康检查</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flashes">
+      {% for kind, msg in messages %}
+        <div class="flash {{ kind }}">{{ msg }}</div>
+      {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="wrap foot">
+  <span>本地样例数据，全部校验基于清单 SHA-256；未通过校验不出包。</span>
+</footer>
+</body>
+</html>

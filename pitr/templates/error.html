@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card errorcard">
+  <h1>{{ title }}</h1>
+  <p class="lede">{{ message }}</p>
+  {% if data_dir %}<p class="muted small">数据目录：<code>{{ data_dir }}</code></p>{% endif %}
+  <p><a class="button" href="{{ url_for('index') }}">返回总览</a></p>
+</section>
+{% endblock %}
